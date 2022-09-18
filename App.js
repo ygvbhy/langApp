@@ -22,7 +22,9 @@ const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // https://reactnative.dev/docs/0.66/animated
 // 애니메이션에 대한 자세한 내용 정리
-// 버전에 맞게 확인 하면 됨
+
+// https://reactnative.dev/docs/0.66/panresponder
+// 터치로 드래그하는 것에 대한 자세한 내용 정리
 export default function App() {
   const POSITION = useRef(
       new Animated.ValueXY(
