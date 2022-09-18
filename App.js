@@ -20,9 +20,6 @@ const AnimatedBox = Animated.createAnimatedComponent(TimingBox);
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// https://reactnative.dev/docs/0.66/animated
-// 애니메이션에 대한 자세한 내용 정리
-
 // https://reactnative.dev/docs/0.66/panresponder
 // 터치로 드래그하는 것에 대한 자세한 내용 정리
 export default function App() {
@@ -44,19 +41,27 @@ export default function App() {
     outputRange: ["rgb(255, 99, 71)", "rgb(71, 166, 255)"]
   })
 
-  // 터치로 드래그 할 수 있는 함수 생성
-  // 웹에선 마우스로 드래그 기능
   const panResponder = useRef(
       PanResponder.create({
-        // 어떠한 터치도 사용하겠다는 선언
         onStartShouldSetPanResponder: () => true,
-        // 몇개의 손가락으로 터치 했는지 터치한 위치가 어딘지 까지 값이 나옴 dx, dy
         onPanResponderMove: (_, {dx, dy}) => {
-            // 해당 view 의 위치를 재설정 해주는 명령
           POSITION.setValue({
             x: dx,
             y: dy
           })
+        },
+          // 사용자가 터치가 끝났을때 반응 하는 함수
+        onPanResponderRelease: () => {
+            // 터치가 끝났다고 판단 되면 원래 위치로 돌아오게 함
+            // 그냥 오면 멋없으니 튕기는 애니메이션 넣어서 오게 함
+            Animated.spring(POSITION,{
+                toValue: {
+                    x: 0,
+                    y: 0
+                },
+                bounciness: 20,
+                useNativeDriver: false,
+            }).start()
         }
       })
   ).current;
@@ -64,7 +69,6 @@ export default function App() {
   return (
     <Container>
         <AnimatedBox
-          /*  펜 핸들러를 사용하기 위해 선언 */
           {...panResponder.panHandlers}
           style={{
             borderRadius,
