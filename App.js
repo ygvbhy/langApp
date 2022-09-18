@@ -1,6 +1,6 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef} from 'react';
 import styled from "styled-components/native";
-import {Animated} from "react-native";
+import {Animated, Dimensions} from "react-native";
 
 const Container = styled.View`
   flex: 1;
@@ -9,44 +9,65 @@ const Container = styled.View`
 `
 const TimingBox = styled.View`
   background-color: tomato;
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
 `
 const AnimatedBox = Animated.createAnimatedComponent(TimingBox);
 
 const Touch = styled.Pressable``
 
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
 // https://reactnative.dev/docs/0.66/animated
 // 애니메이션에 대한 자세한 내용 정리
 // 버전에 맞게 확인 하면 됨
 export default function App() {
-  const [up, setUp] = useState(false);
-  // 한가지의 Value 로 설정 해서 X 인지 Y 인지 설정이 가능했음
-  // valueXY 로 설정 하고 {x: ~, y: ~} 로 X, Y 의 값을 따로 지정이 가능 함
-  // 이에 따라 변수의 이름이 변경 되고 해당 값이 사용 될떄는 POSITION.x or POSITION.y 로 사용
-  const POSITION = useRef(new Animated.ValueXY({x: 0, y: 250})).current
-  const toggleUp = () => setUp((prev) => !prev)
-  const moveUp = () => {
-    Animated.timing(POSITION, {
-      toValue: up ? 250 : -250,
-      useNativeDriver: false,
-      duration: 1000,
-    }).start(toggleUp)
-  }
-
-  // String 값으로 선언 하더라고 앞의 숫자는 범위 내에서 변함
-  const rotation = POSITION.y.interpolate({
-    inputRange: [-250, 250],
-    outputRange: ["-360deg", "360deg"],
+  // 위치를 바꾼 이유 : 애니메이션은 정상 작동 하는데 가운데가 디폴트라 끊기면서 중앙으로 갔다가 다시 시작됨
+  const POSITION = useRef(new Animated.ValueXY({x: -SCREEN_WIDTH / 2 + 100, y: -SCREEN_HEIGHT / 2 + 100})).current
+  // 모양이 나오는 위치 값 정의 변수의 이름대로 왼상 우상 왼하 우하
+  const topLeft = Animated.timing(POSITION, {
+    toValue: {
+      x: -SCREEN_WIDTH / 2 + 100,
+      y: -SCREEN_HEIGHT / 2 + 100
+    },
+    useNativeDriver: false,
   })
+  const bottomLeft = Animated.timing(POSITION, {
+    toValue: {
+      x: -SCREEN_WIDTH / 2 + 100,
+      y: SCREEN_HEIGHT / 2 - 100
+    },
+    useNativeDriver: false,
+  })
+  const topRight = Animated.timing(POSITION, {
+    toValue: {
+      x: SCREEN_WIDTH / 2 - 100,
+      y: -SCREEN_HEIGHT / 2 + 100
+    },
+    useNativeDriver: false,
+  })
+  const bottomRight = Animated.timing(POSITION, {
+    toValue: {
+      x: SCREEN_WIDTH / 2 - 100,
+      y: SCREEN_HEIGHT / 2 - 100
+    },
+    useNativeDriver: false,
+  })
+  const moveUp = () => {
+    // 무한 반복
+    Animated.loop(
+        // 애니메이션이 시작 되면 선언 한 순서대로 진행 됨
+        Animated.sequence([
+          bottomLeft, bottomRight, topRight, topLeft
+        ])
+    ).start()
+  }
 
   const borderRadius = POSITION.y.interpolate({
     inputRange: [-250, 250],
-    outputRange: [50, 0]
+    outputRange: [100, 0]
   })
 
-  // useNativeDriver: true 의 선택 값으로 인해 배경 색상은 바꿀 수 없으므로
-  // useNativeDriver: false 로 바꿔주고 진행 해야 배경색이 바뀜
   const bgColor = POSITION.y.interpolate({
     inputRange: [-250, 250],
     outputRange: ["rgb(255, 99, 71)", "rgb(71, 166, 255)"]
@@ -58,7 +79,11 @@ export default function App() {
         style={{
           borderRadius,
           backgroundColor: bgColor,
-          transform: [{rotateY: rotation}, {translateY: POSITION.y}]
+          transform: [
+              // 아래의 함수를 사용 하면 transform 에 대한 값들이 나오게 설정 되어 있음
+              // js 문법 사용 해서 ... 함수 해두면 값들이 선언됨
+              ...POSITION.getTranslateTransform(),
+          ]
         }}
       />
     </Touch>
