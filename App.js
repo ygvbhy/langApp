@@ -1,6 +1,6 @@
 import React, {useRef, useState} from 'react';
 import styled from "styled-components/native";
-import {Animated, Easing} from "react-native";
+import {Animated} from "react-native";
 
 const Container = styled.View`
   flex: 1;
@@ -14,13 +14,6 @@ const TimingBox = styled.View`
 `
 const AnimatedBox = Animated.createAnimatedComponent(TimingBox);
 
-const SpringBox = styled.View`
-  background-color: blue;
-  width: 100px;
-  height: 100px;
-`
-const AnimatedSpringBox = Animated.createAnimatedComponent(SpringBox)
-
 const Touch = styled.Pressable``
 
 // https://reactnative.dev/docs/0.66/animated
@@ -28,63 +21,44 @@ const Touch = styled.Pressable``
 // 버전에 맞게 확인 하면 됨
 export default function App() {
   const [up, setUp] = useState(false);
-  const [down, setDown] = useState(false);
-  // 구분을 위해 변수 명을 바꿔줌
-  const Y_POSITION = useRef(new Animated.Value(250)).current
-
+  // 한가지의 Value 로 설정 해서 X 인지 Y 인지 설정이 가능했음
+  // valueXY 로 설정 하고 {x: ~, y: ~} 로 X, Y 의 값을 따로 지정이 가능 함
+  // 이에 따라 변수의 이름이 변경 되고 해당 값이 사용 될떄는 POSITION.x or POSITION.y 로 사용
+  const POSITION = useRef(new Animated.ValueXY({x: 0, y: 250})).current
   const toggleUp = () => setUp((prev) => !prev)
-  const X = useRef(new Animated.Value(0)).current;
-  const toggleDown = () => setDown((prev) => !prev)
   const moveUp = () => {
-    Animated.timing(Y_POSITION, {
+    Animated.timing(POSITION, {
       toValue: up ? 250 : -250,
-      useNativeDriver: true,
+      useNativeDriver: false,
       duration: 1000,
     }).start(toggleUp)
   }
-  const opacity = Y_POSITION.interpolate({
-    inputRange: [-250, 0, 250],
-    outputRange: [1, .1, 1],
+
+  // String 값으로 선언 하더라고 앞의 숫자는 범위 내에서 변함
+  const rotation = POSITION.y.interpolate({
+    inputRange: [-250, 250],
+    outputRange: ["-360deg", "360deg"],
   })
-  // Y 의 값이 -250 이면 1을 반환해 주세요. or Y 의 값이 0 이면 0 을 반환해 주세요
-  // 와 같은 의미의 코드임
-  // inputRange : Y 의 값이 들어오는 부분
-  // outputRange : Y 의 값이 들어와서 설정한 값이 나오는 부분. 배열의 같은 위치의 값이 나옴
-  // input 과 output 의 배열의 길이는 같아야 함
 
-  Y_POSITION.addListener(() => console.log(opacity))
-  // Y 값이 바뀔떄 마다 확인 해 보면
-  // 1 줄어들었다가 늘어나는걸 확인 가능
-
-  const borderRadius = Y_POSITION.interpolate({
+  const borderRadius = POSITION.y.interpolate({
     inputRange: [-250, 250],
     outputRange: [50, 0]
   })
 
-
-  const moveDown = () => {
-    Animated.spring(X, {
-      toValue: down ? 100 : -100,
-      friction: 10,
-      tension: 800,
-      useNativeDriver: true
-    }).start(toggleDown)
-  }
+  // useNativeDriver: true 의 선택 값으로 인해 배경 색상은 바꿀 수 없으므로
+  // useNativeDriver: false 로 바꿔주고 진행 해야 배경색이 바뀜
+  const bgColor = POSITION.y.interpolate({
+    inputRange: [-250, 250],
+    outputRange: ["rgb(255, 99, 71)", "rgb(71, 166, 255)"]
+  })
 
   return <Container>
     <Touch onPress={moveUp}>
       <AnimatedBox
         style={{
           borderRadius,
-          opacity,
-          transform: [{translateY: Y_POSITION}]
-        }}
-      />
-    </Touch>
-    <Touch onPress={moveDown}>
-      <AnimatedSpringBox
-        style={{
-          transform: [{translateX: X}]
+          backgroundColor: bgColor,
+          transform: [{rotateY: rotation}, {translateY: POSITION.y}]
         }}
       />
     </Touch>
