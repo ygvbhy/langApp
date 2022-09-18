@@ -16,6 +16,9 @@ export default function App() {
   const [y, setY] = useState(0);
   const [intervalId, setIntervalId] = useState(null)
   const moveUp = () => {
+    // 말이 애니메이션이지만 아님.
+    // 0.01초마다 반복시켜 y축의 값만 바꿔준 아주 안좋은 애니메이션
+    // 0.01초마다 렌더를 시키기 때문에 만약 이렇게 할거면 그냥 때려 치는게 맞다
     const id = setInterval(() => setY(prev => prev + 1), 10)
     setIntervalId(id)
   }
