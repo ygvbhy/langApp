@@ -44,24 +44,34 @@ export default function App() {
   const panResponder = useRef(
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+          // 움직이고 보면 이전 위치에서 멈춤
+          // 그러나 다시 움직이면 위치가 초기화 됨
+          // 이게 맞는거임 버그는 아님
+          //  이전의 위치를 기억하는 offset
+        onPanResponderGrant: () => {
+            console.log("터치 시작")
+            POSITION.setOffset({
+                // x: POSITION.x,
+                // 숫자값이 아니므로 오류가 발생함
+                // 숫자값으로 할려면 ._value 를 추가해주면 됨 - 문서에 적혀있진 않음
+                x: POSITION.x._value,
+                y: POSITION.y._value
+            })
+        },
         onPanResponderMove: (_, {dx, dy}) => {
+            console.log("터치 중")
           POSITION.setValue({
             x: dx,
             y: dy
           })
         },
-          // 사용자가 터치가 끝났을때 반응 하는 함수
+
         onPanResponderRelease: () => {
-            // 터치가 끝났다고 판단 되면 원래 위치로 돌아오게 함
-            // 그냥 오면 멋없으니 튕기는 애니메이션 넣어서 오게 함
-            Animated.spring(POSITION,{
-                toValue: {
-                    x: 0,
-                    y: 0
-                },
-                bounciness: 20,
-                useNativeDriver: false,
-            }).start()
+            console.log("터치 종료")
+            // 계속 움직이다 보면 미쳐 돌아가서 누른 위치보다 높거나 낮게 위치하여 움직임
+            // 이때 누를떄와 마찬가지로 값을 계속 더해줘서 그런 이슈가 생김
+            POSITION.flattenOffset()
+            // 위치를 초기화 해줌
         }
       })
   ).current;
