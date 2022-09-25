@@ -6,7 +6,6 @@ import {
     View
 } from "react-native";
 import {Ionicons} from '@expo/vector-icons';
-// Ionicons 의 아이콘을 정리하여 모아둠
 import icons from "./icons";
 
 const Container = styled.View`
@@ -58,20 +57,19 @@ export default function App() {
     })
 
     const goCenter = Animated.spring(position, {toValue : 0, useNativeDriver: true})
-    const goLeft = Animated.spring(position, {toValue: -400, tension: 5, useNativeDriver: true})
-    const goRight = Animated.spring(position, {toValue: 400, tension: 5, useNativeDriver:  true})
+    const goLeft = Animated.spring(position, {toValue: -400, tension: 5, useNativeDriver: true, restSpeedThreshold: 100, restDisplacementThreshold: 100})
+    // restSpeedThreshold 스프링이 정지된 것으로 간주되는 속도(초당 픽셀 수)입니다. 기본값은 0.001입니다.
+    // restDisplacementThreshold 스프링이 정지 상태라고 간주해야 하는 정지 상태로부터의 변위 임계값. 기본값은 0.001입니다.
+    // 이 두값을 적용 하지 않으면 스프링 애니메이션이 끝나는데에 약 3초 가량 소모 됨 그래서 첫장이 돌아오는데에 시간이 너무 오래 걸리므로
+    // 헤당 값을 통해 빠르게 애니메이션을 끝내는 것임
+    const goRight = Animated.spring(position, {toValue: 400, tension: 5, useNativeDriver:  true, restSpeedThreshold: 100, restDisplacementThreshold: 100})
 
-    // 카드 배열의 위치를 기억 하기 위해 설정
     const [index, setIndex] = useState(0);
-    // 움직임이 완료 됐을때 실행
     const onDismiss = () => {
         scale.setValue(1);
-        // 첫 장의 카드를 다시 원 위치로 돌아오게 함
         position.setValue(0)
-        // 아이콘의 배열을 위해 값을 계속 추가 해서 아이콘이 계속 바뀜
         setIndex(prev => prev + 1)
     }
-    // 그래서 시야에선 무한히 카드가 생성 되는 것 처럼 보임
 
     const panResponder = useRef(PanResponder.create({
         onStartShouldSetPanResponder: () => true,
