@@ -22,6 +22,22 @@ const Card = styled(Animated.createAnimatedComponent(View))`
   justify-content: center;
   border-radius: 12px;
   box-shadow: 1px 1px 5px rgba(0,0,0, .2);
+  position: absolute;
+  // 카드의 위치를 고정값으로 적용 
+`
+// 고정값으로 해놨기에 위치 틀어져서 해당 카드들이 모인 박스를 정의
+const CardContainer = styled.View`
+  flex: 3;
+  justify-content: center;
+  align-items: center;
+`
+// 버튼 디자인
+const Btn = styled.TouchableOpacity`
+  margin: 0 10px;
+`;
+const BtnContainer = styled.View`
+  flex-direction: row;
+  flex: 1
 `
 
 export default function App() {
@@ -37,18 +53,29 @@ export default function App() {
         // 위에 설정한 값을 넘어 갈 때 행동할것을 정해줌
         extrapolate: 'clamp'
     })
+    // 두번쨰 카드의 위치 값 지정
+    // 첫 번째 카드 뒤에 작게 위치 하고 있음
+    const secondScale = position.interpolate({
+        inputRange: [-300, 0, 300],
+        outputRange: [1, .7, 1],
+        extrapolate: 'clamp'
+    })
+
+    // 움직이는 애니메이션 정의
+    const goCenter = Animated.spring(position, {toValue : 0, useNativeDriver: true})
+    const goLeft = Animated.spring(position, {toValue: -400, tension: 5, useNativeDriver: true})
+    const goRight = Animated.spring(position, {toValue: 400, tension: 5, useNativeDriver:  true})
 
     const panResponder = useRef(PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: () => onPressIn(),
         onPanResponderRelease: (_, {dx}) => {
-            // dx 의 위치 값에 따라 할것을 정해줌
-            if( dx < -320){
-                Animated.spring(position, {toValue: -400, useNativeDriver: true}).start()
-            } else if (dx > 320) {
-                Animated.spring(position, {toValue: 400, useNativeDriver: true}).start()
+            if( dx < -250){
+                goLeft.start()
+            } else if (dx > 250) {
+                goRight.start()
             } else {
-                Animated.spring(position, {toValue : 0, useNativeDriver: true}).start()
+                goCenter.start()
             }
             onPressOut()
         },
@@ -57,16 +84,39 @@ export default function App() {
         },
     })).current;
 
+    const closePress = () => {
+        goLeft.start();
+    }
+    const checkPress = () => {
+        goRight.start()
+    }
+
     return (
         <Container>
-            <Card
-                {...panResponder.panHandlers}
-                style={{
-                transform: [{scale}, {translateX: position}, {rotateZ: rotation}]
-                }}
-            >
-                <Ionicons name="pizza" color="#192a56" size={98} />
-            </Card>
+            <CardContainer>
+                <Card style={{
+                    transform: [{scale: secondScale}]
+                }}>
+                    <Ionicons name="beer" color="#192a56" size={98} />
+                </Card>
+                <Card
+                    {...panResponder.panHandlers}
+                    style={{
+                    transform: [{scale}, {translateX: position}, {rotateZ: rotation}]
+                    }}
+                >
+                    <Ionicons name="pizza" color="#192a56" size={98} />
+                </Card>
+            </CardContainer>
+            {/* 해당 아이콘을 아는지 모르는지에 대한 버튼 여부 안다 모른다 느낌의 아이콘 */}
+            <BtnContainer>
+                <Btn onPress={() => closePress()}>
+                    <Ionicons name="close-circle" color='white' size={58} />
+                </Btn>
+                <Btn onPress={() => checkPress()}>
+                    <Ionicons name="checkmark-circle" color='white' size={58} />
+                </Btn>
+            </BtnContainer>
         </Container>
     )
 }
