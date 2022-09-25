@@ -1,95 +1,66 @@
 import React, {useRef} from 'react';
 import styled from "styled-components/native";
 import {
-  Animated,
-  Dimensions,
-  PanResponder
+    Animated,
+    PanResponder,
+    View
 } from "react-native";
+import {Ionicons} from '@expo/vector-icons';
 
 const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
+  background-color: #00a8ff;
 `
-const TimingBox = styled.View`
-  background-color: tomato;
-  width: 200px;
-  height: 200px;
+
+const Card = styled(Animated.createAnimatedComponent(View))`
+  background-color: white;
+  width: 300px;
+  height: 300px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-shadow: 1px 1px 5px rgba(0,0,0, .2);
 `
-const AnimatedBox = Animated.createAnimatedComponent(TimingBox);
 
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-// https://reactnative.dev/docs/0.66/panresponder
-// 터치로 드래그하는 것에 대한 자세한 내용 정리
 export default function App() {
-  const POSITION = useRef(
-      new Animated.ValueXY(
-          {
-            x: 0,
-            y: 0
-          })
-  ).current
-
-  const borderRadius = POSITION.y.interpolate({
-    inputRange: [-250, 250],
-    outputRange: [100, 0]
-  })
-
-  const bgColor = POSITION.y.interpolate({
-    inputRange: [-250, 250],
-    outputRange: ["rgb(255, 99, 71)", "rgb(71, 166, 255)"]
-  })
-
-  const panResponder = useRef(
-      PanResponder.create({
+    const scale = useRef(new Animated.Value(1)).current;
+    const panResponder = useRef(PanResponder.create({
         onStartShouldSetPanResponder: () => true,
-          // 움직이고 보면 이전 위치에서 멈춤
-          // 그러나 다시 움직이면 위치가 초기화 됨
-          // 이게 맞는거임 버그는 아님
-          //  이전의 위치를 기억하는 offset
-        onPanResponderGrant: () => {
-            console.log("터치 시작")
-            POSITION.setOffset({
-                // x: POSITION.x,
-                // 숫자값이 아니므로 오류가 발생함
-                // 숫자값으로 할려면 ._value 를 추가해주면 됨 - 문서에 적혀있진 않음
-                x: POSITION.x._value,
-                y: POSITION.y._value
-            })
-        },
-        onPanResponderMove: (_, {dx, dy}) => {
-            console.log("터치 중")
-          POSITION.setValue({
-            x: dx,
-            y: dy
-          })
-        },
-
+        // 애니메이션 시작
+        onPanResponderGrant: () => onPressIn(),
+        // 애니메이션 종료시 줄엇던 크기를 늘려주면서 위치 초기화 0 번 자리에
         onPanResponderRelease: () => {
-            console.log("터치 종료")
-            // 계속 움직이다 보면 미쳐 돌아가서 누른 위치보다 높거나 낮게 위치하여 움직임
-            // 이때 누를떄와 마찬가지로 값을 계속 더해줘서 그런 이슈가 생김
-            POSITION.flattenOffset()
-            // 위치를 초기화 해줌
-        }
-      })
-  ).current;
+            onPressOut()
+            Animated.spring(position, {toValue : 0, useNativeDriver: true}).start()
+        },
+        // 애니메이션이 움직일때 x 값만 바꿔줌
+        onPanResponderMove: (_, {dx}) => {
+            position.setValue(dx)
+        },
+    })).current;
+    // 눌렀을떄 반응할 애니메이션
+    const onPressIn = () =>
+        Animated.spring(scale, {toValue: 0.95, useNativeDriver: true}).start()
+    // 터치가 끝났을때 반응 할 애니메이션
+    const onPressOut = () =>
+        Animated.spring(scale, {toValue: 1, useNativeDriver: true}).start()
+    // 초기 위치
+    const position = useRef(new Animated.Value(0)).current
 
-  return (
-    <Container>
-        <AnimatedBox
-          {...panResponder.panHandlers}
-          style={{
-            borderRadius,
-            backgroundColor: bgColor,
-            transform: [
-                ...POSITION.getTranslateTransform(),
-            ]
-          }}
-        />
-    </Container>
-  )
+    return (
+        <Container>
+            <Card
+                {...panResponder.panHandlers}
+                style={{
+                transform: [{scale}, {translateX: position}]
+                }}
+            >
+                <Ionicons name="pizza" color="#192a56" size={98} />
+            </Card>
+        </Container>
+    )
 }
 
 
