@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import styled from "styled-components/native";
 import {
     Animated,
@@ -6,6 +6,8 @@ import {
     View
 } from "react-native";
 import {Ionicons} from '@expo/vector-icons';
+// Ionicons 의 아이콘을 정리하여 모아둠
+import icons from "./icons";
 
 const Container = styled.View`
   flex: 1;
@@ -23,15 +25,12 @@ const Card = styled(Animated.createAnimatedComponent(View))`
   border-radius: 12px;
   box-shadow: 1px 1px 5px rgba(0,0,0, .2);
   position: absolute;
-  // 카드의 위치를 고정값으로 적용 
 `
-// 고정값으로 해놨기에 위치 틀어져서 해당 카드들이 모인 박스를 정의
 const CardContainer = styled.View`
   flex: 3;
   justify-content: center;
   align-items: center;
 `
-// 버튼 디자인
 const Btn = styled.TouchableOpacity`
   margin: 0 10px;
 `;
@@ -50,30 +49,38 @@ export default function App() {
     const rotation = position.interpolate({
         inputRange: [-250, 250],
         outputRange: ["-15deg", "15deg"],
-        // 위에 설정한 값을 넘어 갈 때 행동할것을 정해줌
         extrapolate: 'clamp'
     })
-    // 두번쨰 카드의 위치 값 지정
-    // 첫 번째 카드 뒤에 작게 위치 하고 있음
     const secondScale = position.interpolate({
         inputRange: [-300, 0, 300],
         outputRange: [1, .7, 1],
         extrapolate: 'clamp'
     })
 
-    // 움직이는 애니메이션 정의
     const goCenter = Animated.spring(position, {toValue : 0, useNativeDriver: true})
     const goLeft = Animated.spring(position, {toValue: -400, tension: 5, useNativeDriver: true})
     const goRight = Animated.spring(position, {toValue: 400, tension: 5, useNativeDriver:  true})
+
+    // 카드 배열의 위치를 기억 하기 위해 설정
+    const [index, setIndex] = useState(0);
+    // 움직임이 완료 됐을때 실행
+    const onDismiss = () => {
+        scale.setValue(1);
+        // 첫 장의 카드를 다시 원 위치로 돌아오게 함
+        position.setValue(0)
+        // 아이콘의 배열을 위해 값을 계속 추가 해서 아이콘이 계속 바뀜
+        setIndex(prev => prev + 1)
+    }
+    // 그래서 시야에선 무한히 카드가 생성 되는 것 처럼 보임
 
     const panResponder = useRef(PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: () => onPressIn(),
         onPanResponderRelease: (_, {dx}) => {
             if( dx < -250){
-                goLeft.start()
+                goLeft.start(onDismiss)
             } else if (dx > 250) {
-                goRight.start()
+                goRight.start(onDismiss)
             } else {
                 goCenter.start()
             }
@@ -85,10 +92,10 @@ export default function App() {
     })).current;
 
     const closePress = () => {
-        goLeft.start();
+        goLeft.start(onDismiss);
     }
     const checkPress = () => {
-        goRight.start()
+        goRight.start(onDismiss)
     }
 
     return (
@@ -97,7 +104,7 @@ export default function App() {
                 <Card style={{
                     transform: [{scale: secondScale}]
                 }}>
-                    <Ionicons name="beer" color="#192a56" size={98} />
+                    <Ionicons name={icons[index + 1]} color="#192a56" size={98} />
                 </Card>
                 <Card
                     {...panResponder.panHandlers}
@@ -105,10 +112,9 @@ export default function App() {
                     transform: [{scale}, {translateX: position}, {rotateZ: rotation}]
                     }}
                 >
-                    <Ionicons name="pizza" color="#192a56" size={98} />
+                    <Ionicons name={icons[index]} color="#192a56" size={98} />
                 </Card>
             </CardContainer>
-            {/* 해당 아이콘을 아는지 모르는지에 대한 버튼 여부 안다 모른다 느낌의 아이콘 */}
             <BtnContainer>
                 <Btn onPress={() => closePress()}>
                     <Ionicons name="close-circle" color='white' size={58} />
